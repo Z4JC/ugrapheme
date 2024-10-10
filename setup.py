@@ -10,5 +10,6 @@ setup(
                  Extension("ugrapheme.offsets", sources=["ugrapheme/offsets.pyx"]),
                  Extension("ugrapheme.justify", sources=["ugrapheme/justify.pyx"]),
                  Extension("ugrapheme.ugrapheme", sources=["ugrapheme/ugrapheme.pyx"])],
-    package_data={'ugrapheme': ['ugrapheme/*.pxd', 'ugrapheme/*.pyx']}
+    package_data={'ugrapheme': ['*.pxd', '*.pyx', 'tables/*.pxd', 'tables/*.pyx']},
+    include_package_data=True
 )

@@ -27,12 +27,12 @@ test = ["pytest"]
 "Homepage" = "https://github.com/Z4JC/ugrapheme"
 
 [build-system]
-requires = ["setuptools", "wheel", "Cython"]
+requires = ["setuptools", "wheel", "Cython", "uwcwidth"]
 build-backend = "setuptools.build_meta"
 
 [tool.setuptools.packages.find]
 where = ["."]
-include = ["ugrapheme"]
+include = ["ugrapheme", "ugrapheme.tables"]
 exclude = []
 namespaces = false
 
