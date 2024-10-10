@@ -1,0 +1,42 @@
+[project]
+name = "ugrapheme"
+version = "0.7"
+authors = [{name = "!ZAJC!"}]
+readme = "README.md"
+description = "Unicode 16.0 Extended grapheme clusters in nanoseconds"
+license = {file = "LICENSE"}
+classifiers = [
+    "Development Status :: 5 - Production/Stable",
+    "Intended Audience :: Developers",
+    "License :: OSI Approved :: Zero-Clause BSD (0BSD)",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Cython",
+    "Topic :: Software Development :: Libraries :: Python Modules",
+    "Topic :: Software Development :: Internationalization",
+    "Topic :: Software Development :: Localization",
+    "Topic :: Text Processing",
+    "Topic :: Terminals",
+    "Topic :: Utilities"
+]
+dependencies = ["uwcwidth"]
+
+[project.optional-dependencies]
+test = ["pytest"]
+
+[project.urls]
+"Homepage" = "https://github.com/Z4JC/ugrapheme"
+
+[build-system]
+requires = ["setuptools", "wheel", "Cython"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools.packages.find]
+where = ["."]
+include = ["ugrapheme"]
+exclude = []
+namespaces = false
+
+[tool.pytest.ini_options]
+pythonpath = ["."]
+testpaths = ["tests"]
+addopts = ["--import-mode=importlib"]
