@@ -114,31 +114,34 @@ In [6]: %%timeit
 332 ns ± 0.79 ns per loop (mean ± std. dev. of 7 runs, 1,000,000 loops each)
 ```
 
-### pyicu: 5x slower, incorrect
+### pyicu: 8x slower
 
 ```python3
 In [1]: import icu
    ...: def iterate_breaks(text, break_iterator):
+   ...:     text = icu.UnicodeString(text)
    ...:     break_iterator.setText(text)
    ...:     lastpos = 0
    ...:     while True:
    ...:         next_boundary = break_iterator.nextBoundary()
    ...:         if next_boundary == -1: return
-   ...:         yield text[lastpos:next_boundary]
+   ...:         yield str(text[lastpos:next_boundary])
    ...:         lastpos = next_boundary
-   ...: bi = icu.BreakIterator.createCharacterInstance(icu.Locale.getRoot())In 
+   ...: bi = icu.BreakIterator.createCharacterInstance(icu.Locale.getRoot())
 In [2]: from ugrapheme import grapheme_split
-In [3]: print(','.join(iterate_breaks("Hello 👩🏽‍🔬! 👩🏼‍❤️‍💋‍👨🏾 अनुच्छेद", bi)))   # Wrong
-H,e,l,l,o, ,👩🏽‍🔬! 👩,🏼,‍,❤️‍💋‍👨🏾 अनुच्छे,द,,,,
-In [4]: print(','.join(grapheme_split("Hello 👩🏽‍🔬! 👩🏼‍❤️‍💋‍👨🏾 अनुच्छेद")))       # Correct
+In [3]: print(','.join(iterate_breaks("Hello 👩🏽‍🔬! 👩🏼‍❤️‍💋‍👨🏾 अनुच्छेद", bi)))
+H,e,l,l,o, ,👩🏽‍🔬,!, ,👩🏼‍❤️‍💋‍👨🏾, ,अ,नु,च्छे,द
+In [4]: print(','.join(grapheme_split("Hello 👩🏽‍🔬! 👩🏼‍❤️‍💋‍👨🏾 अनुच्छेद")))
 H,e,l,l,o, ,👩🏽‍🔬,!, ,👩🏼‍❤️‍💋‍👨🏾, ,अ,नु,च्छे,द
 In [5]: %%timeit
    ...: list(iterate_breaks("Hello 👩🏽‍🔬! 👩🏼‍❤️‍💋‍👨🏾 अनुच्छेद", bi))
-1.6 μs ± 9.62 ns per loop (mean ± std. dev. of 7 runs, 1,000,000 loops each)
+2.84 μs ± 23.5 ns per loop (mean ± std. dev. of 7 runs, 100,000 loops each)
 In [6]: %%timeit
    ...: grapheme_split("Hello 👩🏽‍🔬! 👩🏼‍❤️‍💋‍👨🏾 अनुच्छेद")
-335 ns ± 1.48 ns per loop (mean ± std. dev. of 7 runs, 1,000,000 loops each)
+337 ns ± 4.1 ns per loop (mean ± std. dev. of 7 runs, 1,000,000 loops each)
 ```
+In order for PyICU to split correctly, the strings need explicit conversion from/to `icu.UnicodeString`.  While Python strings index into Unicode codepoints/characters, the boundaries returned by PyICU iterators are unfortunately indices into a UTF-8 representation of the string, even if you pass in a native Python string initially. Thanks to Behdad Esfahbod of [harfbuzz](https://harfbuzz.github.io/) fame for catching this.
+
 
 ## Gotchas and performance tips
 ### Standalone functions for highest performance
