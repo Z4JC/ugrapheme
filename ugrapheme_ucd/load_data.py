@@ -47,7 +47,7 @@ class GraphemeBreakProps:
 
 def load_grapheme_break_props(path=GRAPHEME_BREAK_PROPRETY_TXT):
     GraphemeBreakProps.init()
-    with open(path, 'r') as f:
+    with open(path, 'r', encoding='utf-8') as f:
         while True:
             s = read_data_line(f)
             if s == '':
@@ -94,7 +94,7 @@ class EmojiProps:
 
 def load_emoji_props(path=EMOJI_DATA_TXT):
     EmojiProps.init()
-    with open(path, 'r') as f:
+    with open(path, 'r', encoding='utf-8') as f:
         while True:
             s = read_data_line(f)
             if s == '':
@@ -125,7 +125,7 @@ class InCBProps:
 
 def load_incb_props(path=DERIVED_CORE_PROPERTIES_TXT):
     InCBProps.init()
-    with open(path, 'r') as f:
+    with open(path, 'r', encoding='utf-8') as f:
         while True:
             s = read_data_line(f)
             if s == '':
@@ -191,7 +191,7 @@ def set_stats(s):
 
 def load_grapheme_break_test(path=GRAPHEME_BREAK_TEST_TXT):
     test_cases = []
-    with open(path, 'r') as f:
+    with open(path, 'r', encoding='utf-8') as f:
         while True:
             s = read_data_line(f)
             if s == '':
