@@ -45,3 +45,4 @@ addopts = ["--import-mode=importlib"]
 build-frontend = "build"
 test-command = "pytest {package}/tests"
 test-requires = "pytest"
+build = "cp313-*"
