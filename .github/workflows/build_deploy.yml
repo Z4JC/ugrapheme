@@ -22,6 +22,13 @@ jobs:
 
       - name: Build wheels
         uses: pypa/cibuildwheel@v2.21.3
+        env:
+          CIBW_TEST_COMMAND_WINDOWS: >
+            cd /d {package} && python3 -mvenv venv
+            && venv\scripts\pip install setuptools Cython uwcwidth pytest
+            && venv\scripts\python3 setup.py build_ext --inplace
+            && venv\scripts\pytest
+
         # env:
         #   CIBW_SOME_OPTION: value
         #    ...
