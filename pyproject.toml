@@ -50,4 +50,4 @@ cd $( mktemp -d ) \
 && pytest
 """
 test-requires = "pytest"
-build = "cp313-*"
+skip = ["cp36-*", "cp37-*", "pp*"]
