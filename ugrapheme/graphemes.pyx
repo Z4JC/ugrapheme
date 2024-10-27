@@ -44,6 +44,23 @@ from ugrapheme.unicode_pyobject cimport (_PyUnicode_Check, _PyUnicode_DATA,
 
 from uwcwidth cimport wcswidth
 
+cdef extern from *:
+    """
+    # include <limits.h>
+    # include <stdint.h>
+    # include <Python.h>
+
+    # if SIZE_MAX > UINT32_MAX
+    #  define GRAPHEME32_MAX UINT32_MAX
+    #  define gsizecheck_t Py_ssize_t
+    # else
+    #  define GRAPHEME32_MAX PY_SSIZE_T_MAX
+    #  define gsizecheck_t int64_t
+    # endif
+    """
+    uint32_t GRAPHEME32_MAX
+    ctypedef int gsizecheck_t
+
 
 assert PyUnicode_1BYTE_KIND == 1
 assert PyUnicode_2BYTE_KIND == 2
@@ -184,12 +201,14 @@ cdef public class graphemes [type graphemes_type, object graphemes_obj]:
         position 1, the grapheme CRLF at position 2
         and then letter 't' at position 3. Inside the underlying python
         string, the letter 't' is at index (offset) 4."""
-        if pos > self.gl:
+        cdef Py_ssize_t gl = <Py_ssize_t> self.gl
+
+        if pos > gl:
             raise IndexError("index %d out of bounds" % pos)
         if pos < 0:
-            pos += self.gl
+            pos += gl
             if pos < 0:
-                raise IndexError("index %d out of bounds" % (pos - self.gl))
+                raise IndexError("index %d out of bounds" % (pos - gl))
         return self.off[pos]
 
     cpdef uint32_t off_to_pos(self, Py_ssize_t off) except 0xffffffff:
@@ -209,14 +228,16 @@ cdef public class graphemes [type graphemes_type, object graphemes_obj]:
         Notice also that offsets 2 and 3 both correspond to position 2,
         as the grapheme CRLF occupies 2 neighboring codepoints in the
         underlying python string."""
-        if off > self.sl:
+        cdef Py_ssize_t sl = <Py_ssize_t> self.sl
+
+        if off > sl:
             raise IndexError("index %d out of bounds" % off)
-        elif off == self.sl:
+        elif off == sl:
             return self.gl
         if off < 0:
-            off += self.sl
+            off += sl
             if off < 0:
-                raise IndexError("index %d out of bounds" % (off - self.sl))
+                raise IndexError("index %d out of bounds" % (off - sl))
         return _off_to_pos_unsafe(self, off)
 
     cpdef graphemes gslice(self, Py_ssize_t start=PY_SSIZE_T_MIN,
@@ -281,7 +302,7 @@ cdef public class graphemes [type graphemes_type, object graphemes_obj]:
         if x < 0:
             raise ValueError('replicating does not work with '
                              'negative numbers')
-        if x >= UINT32_MAX:
+        if x >= GRAPHEME32_MAX:
             raise ValueError('replication count too large (%d)' % x)
         return _replicate_graphemes(self, x)
 
@@ -321,7 +342,7 @@ cdef public class graphemes [type graphemes_type, object graphemes_obj]:
     of a single grapheme"""
         if isinstance(x, str):
             return _lrfind_unsafe(
-                self, <str> x, UINT32_MAX, 1, 0, self.gl, partial) != -1
+                self, <str> x, GRAPHEME32_MAX, 1, 0, self.gl, partial) != -1
         elif isinstance(x, graphemes):
             return _lrfind_unsafe(
                 self, (<graphemes> x).ustr, (<graphemes> x).gl,
@@ -332,7 +353,7 @@ cdef public class graphemes [type graphemes_type, object graphemes_obj]:
 
     cdef bint has_str(self, unicode x, bint partial=False) noexcept:
         return _lrfind_unsafe(
-            self, <str> x, UINT32_MAX, 1, 0, self.gl, partial) != -1
+            self, <str> x, GRAPHEME32_MAX, 1, 0, self.gl, partial) != -1
 
     cdef bint has_graphemes(self, graphemes x, bint partial=False) noexcept:
         return _lrfind_unsafe(
@@ -358,7 +379,7 @@ cdef public class graphemes [type graphemes_type, object graphemes_obj]:
                               Py_ssize_t end=PY_SSIZE_T_MAX,
                               bint partial=False) noexcept:
         PySlice_AdjustIndices(self.gl, &start, &end, 1)
-        return _count_unsafe(self, sub, UINT32_MAX, start, end, partial)
+        return _count_unsafe(self, sub, GRAPHEME32_MAX, start, end, partial)
 
     cdef Py_ssize_t count_graphemes(self, graphemes sub,
                                     Py_ssize_t start=0,
@@ -741,7 +762,7 @@ cdef inline void _copyout_strings_and_graphemes(
 
 cdef inline graphemes _seq_concat_graphemes(Py_ssize_t tsl, int max_uprop,
                                             list l, Py_ssize_t ll):
-    if tsl >= UINT32_MAX:
+    if tsl >= GRAPHEME32_MAX:
         raise ValueError("The resulting graphemes string is too long")
 
     cdef unicode out_ustr = PyUnicode_New_by_Uprop(tsl, max_uprop)
@@ -816,7 +837,7 @@ cdef inline uint32_t _seq_concat_grapheme_offsets_uxx(
 
 cdef inline graphemes _seq_concat_graphemes_or_strs(
     Py_ssize_t tsl, int max_uprop, list l, Py_ssize_t ll):
-    if tsl >= UINT32_MAX:
+    if tsl >= GRAPHEME32_MAX:
         raise ValueError("The resulting graphemes string is too long")
 
     cdef unicode out_ustr = PyUnicode_New_by_Uprop(tsl, max_uprop)
@@ -946,7 +967,7 @@ cdef inline uint32_t _recalc_offsets(uintXX_t *ch_ustr, uint32_t *off,
 
 cdef inline graphemes _seq_concat_sep_graphemes_or_strs(
     Py_ssize_t tsl, int max_uprop, list l, Py_ssize_t ll, PyObject *sep_g):
-    if tsl >= UINT32_MAX:
+    if tsl >= GRAPHEME32_MAX:
         raise ValueError("The resulting graphemes string is too long")
 
     cdef unicode out_ustr = PyUnicode_New_by_Uprop(tsl, max_uprop)
@@ -968,7 +989,7 @@ cdef inline graphemes _seq_concat_sep_graphemes_or_strs(
 
 cdef inline graphemes _seq_concat_sep_graphemes(
      Py_ssize_t tsl, int max_uprop, list l, Py_ssize_t ll, PyObject *sep_g):
-    if tsl >= UINT32_MAX:
+    if tsl >= GRAPHEME32_MAX:
         raise ValueError("The resulting graphemes string is too long")
 
     cdef unicode out_ustr = PyUnicode_New_by_Uprop(tsl, max_uprop)
@@ -1157,7 +1178,10 @@ cdef inline graphemes _append_str(graphemes self, unicode x):
     cdef Py_ssize_t xsl = PyUnicode_GET_LENGTH(x)
     if xsl == 0:
         return self
-    if xsl + <Py_ssize_t> self.sl >= UINT32_MAX:
+
+    cdef gsizecheck_t size_test = xsl + <Py_ssize_t> self.sl
+
+    if size_test >= <gsizecheck_t> GRAPHEME32_MAX:
         raise ValueError("This string is too large")
 
     cdef size_t new_off_size = (self.gl + xsl + 1) * sizeof(uint32_t)
@@ -1198,7 +1222,10 @@ cdef inline graphemes _append_graphemes(graphemes self, graphemes xg):
         return self
     if self.sl == 0:
         return xg
-    if xsl + <Py_ssize_t> self.sl >= UINT32_MAX:
+
+    cdef gsizecheck_t size_test = xsl + <Py_ssize_t> self.sl
+
+    if size_test >= <gsizecheck_t> GRAPHEME32_MAX:
         raise ValueError("This string is too large")
 
     cdef size_t new_off_size = (self.gl + xsl + 1) * sizeof(uint32_t)
@@ -1251,7 +1278,7 @@ cdef inline void _offcopy(uint32_t *dest, uint32_t *src, uint32_t l,
 cdef inline _init_from_str(graphemes self, unicode ustr):
     self.ustr = ustr
     cdef Py_ssize_t sl = PyUnicode_GET_LENGTH(ustr)
-    if sl >= UINT32_MAX:
+    if sl >= GRAPHEME32_MAX:
         raise ValueError("This string is too big")
     self.sl = sl
     self.off = <uint32_t *> PyMem_Malloc(sizeof(uint32_t) * (self.sl + 1))
@@ -1335,7 +1362,9 @@ cdef inline bint _startsendswith(graphemes self, unicode suffix,
                                  Py_ssize_t sgl, int direction,
                                  Py_ssize_t start, Py_ssize_t end,
                                  bint partial) noexcept:
-    PySlice_AdjustIndices(self.gl, &start, &end, 1)
+    cdef Py_ssize_t gl = <Py_ssize_t> self.gl
+
+    PySlice_AdjustIndices(gl, &start, &end, 1)
     cdef Py_ssize_t ustart = self.off[start], uend = self.off[end]
     if partial:
         return PyUnicode_Tailmatch(self.ustr, suffix, ustart, uend, direction)
@@ -1343,7 +1372,7 @@ cdef inline bint _startsendswith(graphemes self, unicode suffix,
     cdef Py_ssize_t suflen = PyUnicode_GET_LENGTH(suffix)
     if sgl >= 0:
         if direction < 0:
-            if (start + sgl > self.gl
+            if (start + sgl > gl
                  or self.off[start + sgl] != ustart + suflen):
                 return False
         else:
@@ -1355,7 +1384,7 @@ cdef inline bint _startsendswith(graphemes self, unicode suffix,
     if PyUnicode_Tailmatch(self.ustr, suffix, ustart, uend, direction):
         sgl = grapheme_len(suffix)
         if direction < 0:
-            if (start + sgl > self.gl
+            if (start + sgl > gl
                  or self.off[start + sgl] != ustart + suflen):
                 return False
             return True
@@ -1621,7 +1650,7 @@ cdef inline graphemes _replace_1byte(
     cdef uint8_t *self8 = <uint8_t *> PyUnicode_DATA(self.ustr)
 
     cdef Py_ssize_t lnew_big = PyUnicode_GET_LENGTH(n_ustr)
-    if lnew_big >= UINT32_MAX:
+    if lnew_big >= GRAPHEME32_MAX:
         raise ValueError("The new string is too long")
 
     cdef uint32_t lnew = lnew_big
@@ -2552,20 +2581,22 @@ cdef inline uint32_t _off_to_pos_unsafe(graphemes self, uint32_t off) noexcept:
 
 
 cdef inline unicode _slice(graphemes self, Py_ssize_t pos, Py_ssize_t end):
+    cdef Py_ssize_t gl = <Py_ssize_t> self.gl
+
     if pos < 0:
-        pos += self.gl
+        pos += gl
         if pos < 0:
             pos = 0
-    elif pos >= self.gl:
+    elif pos >= gl:
         return ''
     if end < 0:
-        end += self.gl
+        end += gl
         if end < 0:
             end = 0
     if end <= pos:
         return ''
-    if end >= self.gl:
-        end = self.gl
+    if end >= gl:
+        end = gl
         if pos == 0:
             return self.ustr
 
@@ -2589,20 +2620,22 @@ cpdef inline graphemes _gslice(graphemes self,
     if step != 1:
         return _gslice_hard(self, pos, end, step)
 
+    cdef Py_ssize_t sgl = <Py_ssize_t> self.gl
+
     if pos < 0:
-        pos += self.gl
+        pos += sgl
         if pos < 0:
             pos = 0
-    elif pos >= self.gl:
+    elif pos >= sgl:
         return _EMPTY_GRAPHEME
     if end < 0:
-        end += self.gl
+        end += sgl
         if end < 0:
             end = 0
     if end <= pos:
         return _EMPTY_GRAPHEME
-    if end >= self.gl:
-        end = self.gl
+    if end >= sgl:
+        end = sgl
         if pos == 0:
             return self
 
@@ -2639,12 +2672,14 @@ cpdef inline graphemes _gslice_hard(graphemes self,
 
 
 cdef inline unicode _at(graphemes self, Py_ssize_t pos):
-    if pos >= self.gl:
+    cdef Py_ssize_t gl = <Py_ssize_t> self.gl
+
+    if pos >= gl:
         raise IndexError("index %d out of bounds" % pos)
     if pos < 0:
-        pos += self.gl
+        pos += gl
         if pos < 0:
-            raise IndexError("index %d out of bounds" % (pos - self.gl))
+            raise IndexError("index %d out of bounds" % (pos - gl))
 
     cdef PyObject *ustr = <PyObject *> self.ustr
     cdef int kind = _PyUnicode_KIND(ustr)
@@ -2673,18 +2708,20 @@ cdef inline unicode _stepped_slice(graphemes self,
     if step < 0:
         return _neg_stepped_slice(self, pos, end, step)
 
+    cdef Py_ssize_t gl = <Py_ssize_t> self.gl
+
     if pos < 0:
-        pos += self.gl
+        pos += gl
         if pos < 0:
             pos = 0
-    elif pos >= self.gl:
+    elif pos >= gl:
         return ''
     if end < 0:
-        end += self.gl
+        end += gl
         if end < 0:
             end = 0
-    elif end >= self.gl:
-        end = self.gl
+    elif end >= gl:
+        end = gl
     if end <= pos:
         return ''
 
@@ -2716,18 +2753,20 @@ cdef inline unicode _stepped_slice(graphemes self,
 cdef inline unicode _neg_stepped_slice(graphemes self,
                                        Py_ssize_t pos, Py_ssize_t end,
                                        Py_ssize_t step):
+    cdef Py_ssize_t gl = <Py_ssize_t> self.gl
+
     if end < 0:
-        end += self.gl
+        end += gl
         if end < 0:
             end = -1
-    elif end >= self.gl:
+    elif end >= gl:
         return ''
-    if pos >= self.gl:
-        if self.gl == 0:
+    if pos >= gl:
+        if gl == 0:
             return ''
-        pos = self.gl - 1
+        pos = gl - 1
     elif pos < 0:
-        pos += self.gl
+        pos += gl
         if pos < 0:
             return ''
     if end >= pos:
@@ -2820,7 +2859,9 @@ cdef inline graphemes _replicate_graphemes(graphemes self, uint32_t count):
     if count == 1:
         return self
 
-    if <Py_ssize_t> self.sl * <Py_ssize_t> count >= UINT32_MAX:
+    cdef gsizecheck_t size_test = self.sl * count
+
+    if size_test >= <gsizecheck_t> GRAPHEME32_MAX:
         raise ValueError("The resulting graphemes string is too large")
 
     cdef int kind = PyUnicode_KIND(self.ustr)
