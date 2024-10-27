@@ -43,6 +43,11 @@ addopts = ["--import-mode=importlib"]
 
 [tool.cibuildwheel]
 build-frontend = "build"
-test-command = "cd {package} && make test"
+test-command = """
+cd $( mktemp -d ) \
+&& cp -pr {project}/* ./ \
+&& rm -rf ugrapheme \
+&& pytest
+"""
 test-requires = "pytest"
 build = "cp313-*"
