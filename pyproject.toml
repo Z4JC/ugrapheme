@@ -1,6 +1,6 @@
 [project]
 name = "ugrapheme"
-version = "0.7"
+version = "0.8"
 authors = [{name = "!ZAJC!"}]
 readme = "README.md"
 description = "Unicode 16.0 Extended grapheme clusters in nanoseconds"
@@ -40,3 +40,14 @@ namespaces = false
 pythonpath = ["."]
 testpaths = ["tests"]
 addopts = ["--import-mode=importlib"]
+
+[tool.cibuildwheel]
+build-frontend = "build"
+test-command = """
+cd $( mktemp -d ) \
+&& cp -pr {project}/* ./ \
+&& rm -rf ugrapheme \
+&& pytest
+"""
+test-requires = "pytest"
+skip = ["cp36-*", "cp37-*", "pp*"]
