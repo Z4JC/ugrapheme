@@ -1,4 +1,13 @@
-## Overview
+##ugrapheme
+*Unicode Extended grapheme clusters in nanoseconds*
+
+![PyPI - Version](https://img.shields.io/pypi/v/ugrapheme)
+![PyPI - License](https://img.shields.io/pypi/l/ugrapheme)
+![PyPI - Downloads](https://img.shields.io/pypi/dm/ugrapheme)<br>
+![GitHub Actions Workflow Status](https://img.shields.io/github/actions/workflow/status/Z4JC/ugrapheme/build_deploy.yml)
+![GitHub branch check runs](https://img.shields.io/github/check-runs/Z4JC/ugrapheme/main)
+![PyPI - Status](https://img.shields.io/pypi/status/ugrapheme)
+![PyPI - Wheel](https://img.shields.io/pypi/wheel/ugrapheme)<br>
 
 Use `ugrapheme` to make your Python and Cython code see strings as a sequence of grapheme characters, so that the length of `👩🏽‍🔬🏴󠁧󠁢󠁳󠁣󠁴󠁿Hi` is 4 instead of 13. 
 
