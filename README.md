@@ -1,11 +1,11 @@
 ## ugrapheme
 *Unicode Extended grapheme clusters in nanoseconds*
 
-![PyPI - Version](https://img.shields.io/pypi/v/ugrapheme)
-![PyPI - License](https://img.shields.io/pypi/l/ugrapheme)
+[![PyPI - Version](https://img.shields.io/pypi/v/ugrapheme)](https://pypi.org/project/ugrapheme/)
+[![PyPI - License](https://img.shields.io/pypi/l/ugrapheme)](https://github.com/Z4JC/ugrapheme/blob/main/LICENSE)
 ![PyPI - Downloads](https://img.shields.io/pypi/dm/ugrapheme)<br>
-![GitHub Actions Workflow Status](https://img.shields.io/github/actions/workflow/status/Z4JC/ugrapheme/build_deploy.yml)
-![GitHub branch check runs](https://img.shields.io/github/check-runs/Z4JC/ugrapheme/main)
+[![GitHub Actions Workflow Status](https://img.shields.io/github/actions/workflow/status/Z4JC/ugrapheme/build_deploy.yml)](https://github.com/Z4JC/ugrapheme/actions/workflows/build_deploy.yml)
+[![GitHub branch check runs](https://img.shields.io/github/check-runs/Z4JC/ugrapheme/main)](https://github.com/Z4JC/ugrapheme/actions/workflows/test.yml)
 ![PyPI - Status](https://img.shields.io/pypi/status/ugrapheme)
 ![PyPI - Wheel](https://img.shields.io/pypi/wheel/ugrapheme)<br>
 
