@@ -71,12 +71,12 @@ In [12]: print('>> ' + g[::-1] + namaste + ' <<')
 ## Documentation
 Aside from this file, all public methods have detailed docstrings with examples, which should hopefully show up in IPython, VS Code, Jupyter Notebook or whatever else you happen to be using.
 
-## Performance: pyuegc 25x slower, uniseg 45x slower, ...
+## Performance: [pyuegc](https://pypi.org/project/pyuegc/) 25x slower, [uniseg](https://pypi.org/project/uniseg/) 45x slower, ...
 The popular Python grapheme splitting libraries are dramatically slower. Some could not even return the correct results despite spending orders of magnitude more CPU on the same task.
 
 I gave these libraries the benefit of doubt by employing them on simple tasks such as returning the list of graphemes. The `graphemes` object takes an even smaller amount of time to build and takes less memory than a Python list of strings that these libraries expect you to work with, but let's try and do apples to apples here..
 
-### pyuegc: 24x slower
+### [pyuegc](https://pypi.org/project/pyuegc/): 24x slower
 ```python3
 In [1]: from pyuegc import EGC
 In [2]: from ugrapheme import grapheme_split
@@ -91,7 +91,7 @@ In [6]: %%timeit
     ...: grapheme_split("Hello 👩🏽‍🔬! 👩🏼‍❤️‍💋‍👨🏾 अनुच्छेद")
 337 ns ± 3.4 ns per loop (mean ± std. dev. of 7 runs, 1,000,000 loops each)
 ```
-### uniseg: 45x slower, incorrect
+### [uniseg](https://pypi.org/project/uniseg/): 45x slower, incorrect
 ```python3
 In [1]: from uniseg.graphemecluster import grapheme_clusters
 In [2]: from ugrapheme import grapheme_split
@@ -106,7 +106,7 @@ In [6]: %%timeit
     ...: grapheme_split("Hello 👩🏽‍🔬! 👩🏼‍❤️‍💋‍👨🏾 अनुच्छेद")
 340 ns ± 5.31 ns per loop (mean ± std. dev. of 7 runs, 1,000,000 loops each)
 ```
-### grapheme: 52x slower, incorrect
+### [grapheme](https://pypi.org/project/grapheme/): 52x slower, incorrect
 
 ```python3
 In [1]: from grapheme import graphemes
@@ -123,7 +123,7 @@ In [6]: %%timeit
 332 ns ± 0.79 ns per loop (mean ± std. dev. of 7 runs, 1,000,000 loops each)
 ```
 
-### pyicu: 8x slower
+### [pyicu](https://pypi.org/project/PyICU/): 8x slower
 
 ```python3
 In [1]: import icu
@@ -151,6 +151,24 @@ In [6]: %%timeit
 ```
 In order for PyICU to split correctly, the strings need explicit conversion from/to `icu.UnicodeString`.  While Python strings index into Unicode codepoints/characters, the boundaries returned by PyICU iterators are unfortunately indices into a UTF-8 representation of the string, even if you pass in a native Python string initially. Thanks to Behdad Esfahbod of [harfbuzz](https://harfbuzz.github.io/) fame for catching this.
 
+### [wcwidth](https://pypi.org/project/wcwidth/): 1.8x slower, correct
+```python3
+In [1]: from wcwidth import iter_graphemes
+In [2]: from ugrapheme import grapheme_split
+In [3]: print(','.join(iter_graphemes("Hello 👩🏽‍🔬! 👩🏼‍❤️‍💋‍👨🏾 अनुच्छेद")))
+H,e,l,l,o, ,👩🏽‍🔬,!, ,👩🏼‍❤️‍💋‍👨🏾, ,अ,नु,च्छे,द
+In [4]: print(','.join(grapheme_split("Hello 👩🏽‍🔬! 👩🏼‍❤️‍💋‍👨🏾 अनुच्छेद")))
+H,e,l,l,o, ,👩🏽‍🔬,!, ,👩🏼‍❤️‍💋‍👨🏾, ,अ,नु,च्छे,द
+In [5]: %%timeit
+   ...: list(iter_graphemes("Hello 👩🏽‍🔬! 👩🏼‍❤️‍💋‍👨🏾 अनुच्छेद"))
+677 ns ± 9.07 ns per loop (mean ± std. dev. of 7 runs, 1,000,000 loops each)
+In [6]: %%timeit
+   ...: grapheme_split("Hello 👩🏽‍🔬! 👩🏼‍❤️‍💋‍👨🏾 अनुच्छेद")
+380 ns ± 10.7 ns per loop (mean ± std. dev. of 7 runs, 1,000,000 loops each)
+```
+note that python wcwidth uses an iterator, `iter_graphemes`, so `list()` is used.
+
+python `wcwidth` uses the portable C11 [libwcwidth](https://wcwidth.readthedocs.io/en/latest/libwcwidth.html) library compiled into an abi3 module that covers all GIL-enabled python interpreters version 3.10 and newer, but this limited API reads text through `PyUnicode_ReadChar()` and `PyUnicode_Substring()`, while `ugrapheme` builds a Cython extension per-interpreter version and reads the PEP 393 buffer in place, with separate ASCII, Latin-1, UCS-2 and UCS-4 loops.
 
 ## Gotchas and performance tips
 ### Standalone functions for highest performance
